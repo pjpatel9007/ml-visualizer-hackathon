@@ -19,6 +19,40 @@
   color: #888;
 }
 
+.status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding: 0.75rem;
+  background-color: #1a1a1a;
+  border-radius: 8px;
+  font-size: 0.95rem;
+}
+
+.status-label {
+  color: #888;
+  font-weight: 500;
+}
+
+.status-value {
+  color: #ffa500;
+  font-weight: 600;
+}
+
+.status-value.ready {
+  color: #4ade80;
+}
+
+.result-display {
+  color: #61dafb;
+  margin-left: 1rem;
+  padding-left: 1rem;
+  border-left: 2px solid #333;
+  font-weight: 600;
+}
+
 .controls {
   margin-bottom: 2rem;
 }
