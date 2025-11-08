@@ -10,4 +10,5 @@ def hello():
     return "ML Visualizer - Flask Glue Layer"
 
 if __name__ == '__main__':
+    # NOTE: debug=True is for development only. Set to False in production.
     app.run(debug=True)
