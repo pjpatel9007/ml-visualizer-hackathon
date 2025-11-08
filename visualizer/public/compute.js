@@ -19,6 +19,51 @@ Module['cwrap'] = function(name, returnType, argTypes) {
     };
   }
   
+  if (name === 'run_gradient_descent') {
+    return function(learning_rate) {
+      console.log(`[Mock] run_gradient_descent(${learning_rate}) called`);
+      
+      // Simulate gradient descent by calling stream_data ~200 times
+      // Format: {"epoch": 1, "m": 0.5, "b": 1.2, "loss": 98.4}
+      
+      // Initial random values
+      let m = Math.random() * 2 - 1;  // -1 to 1
+      let b = Math.random() * 2 - 1;  // -1 to 1
+      let loss = 100;
+      
+      const totalEpochs = 200;
+      
+      // Target values (simulating convergence)
+      const targetM = 0.5;
+      const targetB = 1.2;
+      
+      for (let epoch = 1; epoch <= totalEpochs; epoch++) {
+        // Simulate gradient descent convergence
+        m = m + (targetM - m) * learning_rate * 0.5;
+        b = b + (targetB - b) * learning_rate * 0.5;
+        loss = Math.abs(targetM - m) * 50 + Math.abs(targetB - b) * 30 + Math.random() * 5;
+        
+        // Create JSON string exactly as C++ will provide it
+        const jsonString = JSON.stringify({
+          epoch: epoch,
+          m: m,
+          b: b,
+          loss: loss
+        });
+        
+        // Call the global stream_data function (defined in worker)
+        if (typeof self.stream_data === 'function') {
+          self.stream_data(jsonString);
+        }
+        
+        // Add small delay to simulate computation (optional, can be removed for speed)
+        // In real WASM, this won't be needed as C++ is fast
+      }
+      
+      console.log(`[Mock] run_gradient_descent completed ${totalEpochs} epochs`);
+    };
+  }
+  
   // Default mock function
   return function() {
     console.log(`[Mock] ${name}() called`);
