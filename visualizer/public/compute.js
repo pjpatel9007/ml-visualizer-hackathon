@@ -60,6 +60,11 @@ Module['cwrap'] = function(name, returnType, argTypes) {
         // In real WASM, this won't be needed as C++ is fast
       }
       
+      // Send completion signal
+      if (typeof self.stream_data === 'function') {
+        self.stream_data(JSON.stringify({ epoch: 'complete' }));
+      }
+      
       console.log(`[Mock] run_gradient_descent completed ${totalEpochs} epochs`);
     };
   }
