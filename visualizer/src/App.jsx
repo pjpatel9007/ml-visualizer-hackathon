@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ComposedChart, Scatter } from 'recharts'
 import './App.css'
 
 function App() {
@@ -10,6 +10,15 @@ function App() {
   const [currentEpoch, setCurrentEpoch] = useState(0)
   const [currentParams, setCurrentParams] = useState({ m: null, b: null, loss: null })
   const workerRef = useRef(null)
+
+  // Hard-coded "Monopoly" dataset
+  const monopolyData = [
+    { x: 0, y: 10 },
+    { x: 1, y: 50 },
+    { x: 2, y: 150 },
+    { x: 3, y: 450 },
+    { x: 4, y: 625 },
+  ]
 
   useEffect(() => {
     // Create the Web Worker instance
@@ -101,6 +110,15 @@ function App() {
     }
   }
 
+  // Derive the fitted line data from current parameters (m, b)
+  // This creates a 2-point line that animates as m and b update
+  const fittedLineData = currentParams.m !== null && currentParams.b !== null
+    ? [
+        { x: 0, y: currentParams.b }, // y = m*0 + b = b
+        { x: 4, y: currentParams.m * 4 + currentParams.b } // y = m*4 + b
+      ]
+    : []
+
   return (
     <div className="App">
       <header className="App-header">
@@ -146,30 +164,67 @@ function App() {
 
       <div className="charts-container">
         <div className="chart-wrapper">
-          <h3>Training Loss</h3>
+          <h3>Model Fit Visualization</h3>
           <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={trainingData}>
+            <ComposedChart data={monopolyData}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="epoch" label={{ value: 'Epoch', position: 'insideBottom', offset: -5 }} />
-              <YAxis label={{ value: 'Loss', angle: -90, position: 'insideLeft' }} />
+              <XAxis 
+                type="number" 
+                dataKey="x" 
+                name="X" 
+                domain={[0, 4]}
+                label={{ value: 'X', position: 'insideBottom', offset: -5 }} 
+              />
+              <YAxis 
+                domain={[0, 700]}
+                label={{ value: 'Y', angle: -90, position: 'insideLeft' }} 
+              />
               <Tooltip />
               <Legend />
-              <Line type="monotone" dataKey="loss" stroke="#8884d8" activeDot={{ r: 8 }} dot={false} />
-            </LineChart>
+              <Scatter 
+                name="Actual Data" 
+                dataKey="y" 
+                fill="#8884d8" 
+              />
+              {fittedLineData.length > 0 && (
+                <Line 
+                  name="Fitted Line" 
+                  data={fittedLineData} 
+                  dataKey="y" 
+                  stroke="#e63946" 
+                  strokeWidth={2}
+                  dot={false}
+                  isAnimationActive={false}
+                />
+              )}
+            </ComposedChart>
           </ResponsiveContainer>
         </div>
 
         <div className="chart-wrapper">
-          <h3>Model Parameters (m & b)</h3>
+          <h3>Model Loss (Mean Squared Error)</h3>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={trainingData}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="epoch" label={{ value: 'Epoch', position: 'insideBottom', offset: -5 }} />
-              <YAxis label={{ value: 'Value', angle: -90, position: 'insideLeft' }} />
+              <XAxis 
+                type="number" 
+                dataKey="epoch" 
+                name="Epoch" 
+                allowDuplicatedCategory={false}
+                label={{ value: 'Epoch', position: 'insideBottom', offset: -5 }} 
+              />
+              <YAxis 
+                dataKey="loss" 
+                name="Loss (MSE)"
+                label={{ value: 'Loss (MSE)', angle: -90, position: 'insideLeft' }} 
+              />
               <Tooltip />
-              <Legend />
-              <Line type="monotone" dataKey="m" stroke="#82ca9d" name="m (slope)" activeDot={{ r: 8 }} dot={false} />
-              <Line type="monotone" dataKey="b" stroke="#ffc658" name="b (intercept)" activeDot={{ r: 8 }} dot={false} />
+              <Line 
+                name="Loss" 
+                dataKey="loss" 
+                stroke="#e63946" 
+                dot={false} 
+              />
             </LineChart>
           </ResponsiveContainer>
         </div>
