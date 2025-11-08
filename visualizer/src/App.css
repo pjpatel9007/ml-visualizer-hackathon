@@ -1,0 +1,68 @@
+.App {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.App-header {
+  margin-bottom: 2rem;
+}
+
+.App-header h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+  color: #61dafb;
+}
+
+.App-header p {
+  font-size: 1.2rem;
+  color: #888;
+}
+
+.controls {
+  margin-bottom: 2rem;
+}
+
+.run-button {
+  background-color: #61dafb;
+  color: #242424;
+  border: none;
+  padding: 12px 32px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.run-button:hover:not(:disabled) {
+  background-color: #4fa8c5;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(97, 218, 251, 0.4);
+}
+
+.run-button:disabled {
+  background-color: #555;
+  color: #888;
+  cursor: not-allowed;
+}
+
+.charts-container {
+  display: grid;
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.chart-wrapper {
+  background-color: #1a1a1a;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.chart-wrapper h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: #61dafb;
+  font-size: 1.3rem;
+}
