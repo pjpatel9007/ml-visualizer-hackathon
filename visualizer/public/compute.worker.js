@@ -43,9 +43,15 @@ self.stream_data = function(jsonString) {
 // Load the Emscripten glue script
 importScripts('/compute.js');
 
-// The Module object is now available from compute.js
-// Override the onRuntimeInitialized callback to initialize our worker
-if (typeof Module !== 'undefined') {
+// The Module object is now available from compute.js as a global
+// Wait for it to be defined and then set up the callback
+(function setupModule() {
+  if (typeof Module === 'undefined') {
+    // Module not available yet, try again
+    setTimeout(setupModule, 10);
+    return;
+  }
+  
   const originalCallback = Module.onRuntimeInitialized || function() {};
   
   Module.onRuntimeInitialized = function() {
@@ -53,6 +59,8 @@ if (typeof Module !== 'undefined') {
     originalCallback();
     
     console.log('[Worker] WASM Runtime Initialized');
+    console.log('[Worker] Module.cwrap exists?', typeof Module.cwrap);
+    console.log('[Worker] Module keys:', Object.keys(Module).slice(0, 20));
     
     // Wrap the C++ functions for JavaScript use
     // cwrap signature: cwrap(name, returnType, argTypes)
@@ -64,7 +72,8 @@ if (typeof Module !== 'undefined') {
       // Real gradient descent function (for Step 3)
       // This function takes learning_rate and will call stream_data() repeatedly
       runGradientDescentFunction = Module.cwrap('run_gradient_descent', null, ['number']);
-      console.log('[Worker] run_gradient_descent function wrapped successfully');
+      console.log('[Worker] run_gradient_descent function wrapped successfully', runGradientDescentFunction);
+      console.log('[Worker] Checking variable status:', 'addFunction=', addFunction, 'runGradientDescentFunction=', runGradientDescentFunction);
       
       // Notify the main thread that the module is loaded and ready
       self.postMessage({
@@ -79,13 +88,14 @@ if (typeof Module !== 'undefined') {
       });
     }
   };
-}
+})();
 
 // Listen for messages from the main thread
 self.onmessage = function(event) {
   const { type, payload } = event.data;
   
   console.log('[Worker] Received message:', type, payload);
+  console.log('[Worker] Global scope check - addFunction:', typeof addFunction, 'runGradientDescentFunction:', typeof runGradientDescentFunction);
   
   switch (type) {
     case 'RUN_ADD':
@@ -118,6 +128,7 @@ self.onmessage = function(event) {
       
     case 'RUN_GRADIENT_DESCENT':
       // Call the WASM gradient descent function
+      console.log('[Worker] runGradientDescentFunction status:', runGradientDescentFunction, 'type:', typeof runGradientDescentFunction);
       if (runGradientDescentFunction) {
         try {
           const learningRate = payload.learning_rate;
