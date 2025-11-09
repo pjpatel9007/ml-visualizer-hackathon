@@ -1,6 +1,9 @@
-// compute.worker.js - Web Worker for running C++/WASM code
+// compute.worker.js - Web Worker for running C++/WASM code and Formula Engine
 // This worker loads the Emscripten-compiled module and runs computations
 // without blocking the main UI thread
+
+// Import mathjs for formula evaluation
+importScripts('/math.js');
 
 // Send MODULE_LOADING message immediately
 self.postMessage({ type: 'MODULE_LOADING' });
@@ -43,6 +46,32 @@ self.stream_data = function(jsonString) {
 
 // Also make it globally available without 'self' prefix
 globalThis.stream_data = self.stream_data;
+
+// Helper function to parse CSV data into array of objects
+function parseCSV(csvString) {
+  const lines = csvString.trim().split('\n');
+  if (lines.length < 2) {
+    throw new Error('CSV must have at least a header and one data row');
+  }
+  
+  // Parse header row
+  const headers = lines[0].split(',').map(h => h.trim());
+  
+  // Parse data rows
+  const data = [];
+  for (let i = 1; i < lines.length; i++) {
+    const values = lines[i].split(',').map(v => v.trim());
+    const row = {};
+    headers.forEach((header, index) => {
+      // Convert to number if possible
+      const value = values[index];
+      row[header] = isNaN(value) ? value : parseFloat(value);
+    });
+    data.push(row);
+  }
+  
+  return data;
+}
 
 // Load the Emscripten glue script
 importScripts('/compute.js');
@@ -159,6 +188,38 @@ self.onmessage = function(event) {
         self.postMessage({
           type: 'MODEL_ERROR',
           payload: { error: 'Function not initialized' }
+        });
+      }
+      break;
+      
+    case 'RUN_FORMULA':
+      // Run custom formula using mathjs
+      try {
+        const { formulaString, csvData } = payload;
+        
+        // Parse CSV data
+        const parsedData = parseCSV(csvData);
+        
+        // Compile the formula
+        const compiledFormula = math.compile(formulaString);
+        
+        // Evaluate formula for each row
+        const results = [];
+        for (const row of parsedData) {
+          const result = compiledFormula.evaluate(row);
+          results.push(result);
+        }
+        
+        // Send all results in a single batch
+        self.postMessage({
+          type: 'FORMULA_RESULT',
+          payload: results
+        });
+      } catch (e) {
+        // Send error using MODEL_ERROR for consistency with existing error handling
+        self.postMessage({
+          type: 'MODEL_ERROR',
+          payload: e.message
         });
       }
       break;

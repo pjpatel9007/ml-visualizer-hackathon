@@ -30,6 +30,9 @@ yarn-error.log*
 dist/
 build/
 
+# Third-party libraries (copied from node_modules)
+visualizer/public/math.js
+
 # C++
 *.o
 *.out
