@@ -7,12 +7,20 @@
 using namespace Eigen;
 
 // Import the JavaScript callback function that P1 has defined
-EM_JS(void, stream_data, (const char* json_str), {
-    // Call the global stream_data function that P1's worker provides
-    if (typeof stream_data !== 'undefined') {
+// Use a different internal name to avoid conflicts
+EM_JS(void, call_js_stream_data, (const char* json_str), {
+    // Access the stream_data function from the worker's global scope
+    if (typeof self !== 'undefined' && typeof self.stream_data === 'function') {
+        self.stream_data(UTF8ToString(json_str));
+    } else if (typeof stream_data === 'function') {
         stream_data(UTF8ToString(json_str));
     }
 });
+
+// Wrapper function to call from C++
+void stream_data(const char* json_str) {
+    call_js_stream_data(json_str);
+}
 
 // Export the gradient descent function that P1's Web Worker will call
 extern "C" {
